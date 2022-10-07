@@ -1,9 +1,13 @@
+import _G
 import json
 import requests
 from copy import copy
 from random import randint
-from _G import log_debug,log_error,log_info,log_warning
+from _G import log_debug,log_error,log_info,log_warning,handle_exception
 from base64 import b64decode
+from threading import Thread
+from time import sleep
+from pprint import pprint
 
 LONG_MAX_VAL = 0xffffffff
 
@@ -36,27 +40,47 @@ IMG_GEN_INPUT = {
     }
 }
 
+def reload():
+    global POST_HEADERS
+    with open(_G.PERM_FILE, 'r') as fp:
+        dat = json.load(fp)
+        POST_HEADERS['Authorization'] = dat['0']['NAI_TOKEN']
 
-class ImageGenRequest:
-    def __init__(self):
-        self.out_name = ''
-        self.tags = ''
-        self.seed = ''
-        self.width = 512
-        self.height = 768
-        self.scale = 11
-        self.steps = 28
-        self.n_samples = 1
-        self.sampler = 'k_euler_ancestral'
 
-IMAGE_QUEUE = [None] * 20
+VALID_SAMPLERS = (
+    'k_euler_ancestral',
+    'k_euler',
+    'k_lms',
+    'plms',
+    'ddim'
+)
+def is_params_ok(tags, seed, scale, sampler):
+    try:
+        if len(tags) > 200:
+            return False
+        if seed < 0 or seed > LONG_MAX_VAL:
+            return False
+        if scale < 3 or scale > 32:
+            return False
+        if sampler not in VALID_SAMPLERS:
+            return False
+    except Exception as err:
+        handle_exception(err)
+        return False
+    return True
 
-def generate_image(out_name, tags, seed=None):
+def generate_image(tags, seed=None, scale=11, sampler='k_euler_ancestral'):
     global POST_HEADERS,IMG_GEN_INPUT
     payload = copy(IMG_GEN_INPUT)
     payload['input'] += ', '+tags
-    if seed == None or type(seed) != int or seed > LONG_MAX_VAL:
-        payload['seed'] = randint(0, LONG_MAX_VAL)
+    if seed == None:
+        seed = randint(0, LONG_MAX_VAL)
+    if not is_params_ok(tags, seed, scale, sampler):
+        return _G.ERRNO_BADDATA
+    payload['parameters']['seed']  = seed
+    payload['parameters']['scale'] = scale
+    payload['parameters']['sampler'] = sampler
+    log_info(f"Generating image with tags `{tags}`#{seed}")
     res = requests.post(
         'https://api.novelai.net/ai/generate-image',
         json.dumps(payload),
@@ -65,9 +89,7 @@ def generate_image(out_name, tags, seed=None):
     if res.status_code != 201:
         log_error("An error occurred during generating image")
         log_error(res, res.json())
-        return False
+        return _G.ERRNO_FAILED
+    log_info(f"Done image generation with tags `{tags}`#{seed}")
     raw = res.content.decode().split('\n')[2]
-    with open(out_name, 'wb') as fp:
-        fp.write(b64decode(raw[2].split('data:')[1]))
-    return out_name
-    
+    return raw.split('data:')[1]

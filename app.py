@@ -54,16 +54,27 @@ def request_nai_image():
     seed  = request.form.get('seed')
     scale = request.form.get('scale')
     sampler = request.form.get('sampler')
+    model = request.form.get('model')
     
     if not tags:
         return jsonify({'msg': 'Bad tags'}),400
-    if not scale:
-        scale = 11
-    if not sampler:
-        sampler = 'k_euler_ancestral'
-    
+
+    kwargs = {}
+    if seed:
+        kwargs['seed'] = seed
+    if scale:
+        try:
+            kwargs['scale'] = int(scale)
+        except Exception:
+            pass
+    if sampler:
+        kwargs['sampler'] = sampler
+    if model:
+        kwargs['model'] = model
+
+    log_info("Generation extra arguments:", kwargs)
     NaiGenCache[token]['quota'] += 1
-    ret = nai.generate_image(tags, seed, scale, sampler)
+    ret = nai.generate_image(tags, **kwargs)
     if ret == _G.ERRNO_BADDATA:
         return jsonify({'msg': 'Bad paramters'}),400
     elif ret == _G.ERRNO_FAILED:

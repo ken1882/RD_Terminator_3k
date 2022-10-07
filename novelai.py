@@ -35,8 +35,8 @@ IMG_GEN_INPUT = {
         'seed': 20221010,
         'height': 768,
         'width': 512,
-        'ucPreset': 0,
-        'uc': "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+        'ucPreset': 2,
+        'uc': "lowres",
     }
 }
 
@@ -54,7 +54,14 @@ VALID_SAMPLERS = (
     'plms',
     'ddim'
 )
-def is_params_ok(tags, seed, scale, sampler):
+
+VALID_MODELS = {
+    'fur': 'nai-diffusion-furry',
+    'nac': 'safe-diffusion',
+    'naf': 'nai-diffusion'
+}
+
+def is_params_ok(tags, seed, scale, sampler, model):
     try:
         if len(tags) > 200:
             return False
@@ -64,19 +71,23 @@ def is_params_ok(tags, seed, scale, sampler):
             return False
         if sampler not in VALID_SAMPLERS:
             return False
+        if model not in VALID_MODELS:
+            return False
     except Exception as err:
         handle_exception(err)
         return False
     return True
 
-def generate_image(tags, seed=None, scale=11, sampler='k_euler_ancestral'):
+def generate_image(tags, seed=None, scale=11, sampler='k_euler_ancestral', model='nai'):
     global POST_HEADERS,IMG_GEN_INPUT
     payload = copy(IMG_GEN_INPUT)
     payload['input'] += ', '+tags
     if seed == None:
         seed = randint(0, LONG_MAX_VAL)
-    if not is_params_ok(tags, seed, scale, sampler):
+    if not is_params_ok(tags, seed, scale, sampler, model):
         return _G.ERRNO_BADDATA
+    
+    payload['model'] = VALID_MODELS[model]
     payload['parameters']['seed']  = seed
     payload['parameters']['scale'] = scale
     payload['parameters']['sampler'] = sampler

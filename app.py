@@ -32,7 +32,7 @@ def application_reload():
         PermissionData = json.load(fp)
 
 ### Routes
-@app.route('/api/RequestNaiImage', methods=['POST'])
+@app.route('/rdt3k/api/RequestNaiImage', methods=['POST'])
 def request_nai_image():
     token = request.form.get('token')
     pdat = next((d for d in PermissionData['0']['NAI_ALLOWED_KEYS'] if d['Secret'] == token), None)
@@ -108,7 +108,7 @@ def request_nai_image():
 
     return jsonify({'data': ret, 'seed': seed}),200
 
-@app.route('/api/ReloadConfig', methods=['POST'])
+@app.route('/rdt3k/api/ReloadConfig', methods=['POST'])
 def reload_config():
     token = request.form.get('token')
     _pk   = os.getenv('FLASK_REFRESH_KEY')

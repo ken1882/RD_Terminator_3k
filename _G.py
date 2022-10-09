@@ -1,4 +1,5 @@
 import os, sys
+import json
 import traceback
 from datetime import datetime
 
@@ -37,7 +38,37 @@ ERRNO_UNAVAILABLE = 0xff
 
 SERVER_TICK_INTERVAL = 60
 
+
 PERM_FILE = '.permission.json'
+PermissionData = {}
+CommandLimit   = {}
+
+def reload():
+  global PermissionData,CommandLimit
+  with open(PERM_FILE, 'r') as fp:
+    PermissionData = json.load(fp)
+  for g in PermissionData:
+    if 'commands' not in PermissionData[g]:
+      continue
+    CommandLimit[g] = {}
+    for cmd in PermissionData[g]['commands']:
+      CommandLimit[g][cmd] = {
+        'total': 0,
+        'ttl': datetime.now()
+      }
+reload()
+
+
+def collect_scmd_guids(cmd):
+  global PermissionData
+  ret = []
+  for g in PermissionData:
+    if 'commands' not in PermissionData[g]:
+      continue
+    if cmd not in PermissionData[g]['commands']:
+      continue
+    ret.append(int(g))
+  return ret
 
 def format_curtime():
   return datetime.strftime(datetime.now(), '%H:%M:%S')

@@ -3,10 +3,15 @@ from _G import log_debug,log_error,log_info,log_warning,handle_exception
 import os
 import discord
 import json
+from typing import Union
 from discord.ext import commands
-from datetime import datetime
+from discord import option
+from datetime import datetime,timedelta
 from base64 import b64decode
 import requests
+from threading import Thread
+from time import sleep
+from pprint import pprint
 
 NAI_API_TOKEN = os.getenv('NAI_API_TOKEN')
 NAI_API_HOST  = os.getenv('NAI_API_HOST')
@@ -21,29 +26,70 @@ Bot = commands.Bot(
     )
 )
 
-PermissionData = {}
+def isCommandCDOk(ctx):
+    if ctx.guild:
+        gid = str(ctx.guild.id)
+    else:
+        gid = 0
+    if gid == 0:
+        return True
+    cmd = str(ctx.command)
+    try:
+        ldat = _G.PermissionData[gid]['commands'][cmd]
+    except Exception:
+        return True
+    
+    # pprint(_G.CommandLimit)
+    cdat = _G.CommandLimit[gid][cmd]
+    if 'limit' not in ldat or 'cooldown' not in ldat:
+        return True
 
-def isCommandAuthorized(cmd, author, guild):
-    global PermissionData
-    aid = author.id
-    gid = str(guild.id) if guild else 0
-    roles = author.roles
-    cmd = str(cmd)
+    curt = datetime.now()
+    if cdat['total'] >= ldat['limit']:
+        if curt >= cdat['ttl']:
+            cdat['ttl'] = curt + timedelta(seconds=ldat['cooldown'])
+            cdat['total'] = 0
+        else:
+            ctx.message = f"Server command limit reached, try after {str(cdat['ttl'])}"
+            return False
+    
+    aid = ctx.author.id
+    if aid in cdat and curt < cdat[aid]:
+        ctx.message = f"Your command is in cooldown, try after {str(cdat[aid])}"
+        return False
+    
+    cdat['total'] += 1
+    cdat[aid] = curt + timedelta(seconds=ldat['cooldown'])
+    return True
+
+def isCommandUsable(ctx):
+    aid = ctx.author.id
+    if ctx.guild:
+        gid = str(ctx.guild.id)
+        roles = ctx.author.roles
+    else:
+        gid = 0
+        roles = []
+    cmd = str(ctx.command)
     if str(aid) in os.getenv('DEVELOPER_ID').split(','):
         return True    
     if gid == 0 and str(aid) not in os.getenv('DEVELOPER_ID').split(','):
         return False
-    if gid not in PermissionData:
+    if gid not in _G.PermissionData:
         return False
-    if cmd not in PermissionData[gid]['commands']:
+    if cmd not in _G.PermissionData[gid]['commands']:
         return False
-    if PermissionData[gid]['commands'][cmd][0] == 0:
+    if _G.PermissionData[gid]['commands'][cmd]['roles'][0] == 0:
         return True
-    return any([r.id in PermissionData[gid]['commands'][cmd] for r in roles])
+    return any([r.id in _G.PermissionData[gid]['commands'][cmd]['roles'] for r in roles])
 
 def _verify_permission(ctx):
-    global PermissionData
-    return isCommandAuthorized(ctx.command, ctx.author, ctx.guild)
+    if not isCommandUsable(ctx):
+        ctx.message = "You don't have permission to execute this command"
+        return False
+    elif not isCommandCDOk(ctx):
+        return False
+    return True
 
 verify_permission = commands.check(_verify_permission)
 
@@ -64,38 +110,110 @@ async def on_command_error(ctx, error):
         handle_exception(error)
         await ctx.reply("Command failed with unknown error")
 
+@Bot.event
+async def on_application_command_error(ctx, error):
+    if isinstance(error, discord.errors.CheckFailure):
+        await ctx.respond(ctx.message)
+    else:
+        log_error("Application command error has occurred")
+        handle_exception(error)
+        await ctx.respond("Command failed with unknown error")
+
 @Bot.command(name='ping')
 @verify_permission
 async def ping(ctx):
     msg = f"🏓 Pong! {round(Bot.latency * 1000)}ms"
     return await ctx.reply(msg)
 
-
-@Bot.command(name='naigen')
-@verify_permission
-async def naigen(ctx, tags, *args):
-    await ctx.reply(f"Please wait while generating image with `{tags}`")
-    params = {
-        'token': NAI_API_TOKEN,
-        'tags': tags
-    }
-    
-    for kv in args:
-        k,v = kv.split('=')
-        params[k] = v
-    
+def request_nai_gen(fname, params):
     res = requests.post(f"{NAI_API_HOST}/api/RequestNaiImage", params)
-    fname = f".{hash(str(datetime.now())+ctx.author.name+tags)}.png"
     if res.status_code == 200:
         with open(fname, 'wb') as fp:
             fp.write(b64decode(res.json()['data']))
+    return res
+
+
+UCP_OPTIONS = ['Low Quality + Bad Anatomy', 'Low Quality', 'None']
+
+@Bot.slash_command(name='naigen', 
+    description="Novel AI image generation",
+    guild_ids=_G.collect_scmd_guids('naigen')
+)
+@option(
+    'tags', str,
+    description='Prompt for generating image',
+    required=True,
+)
+@option(
+    'model', str,
+    description='Model to use',
+    choices=['naf', 'nac', 'fur'],
+    default='naf'
+)
+@option(
+    'sampler', str,
+    description='Sampler to use',
+    choices=['k_euler_ancestral', 'k_euler', 'k_lms', 'plms', 'ddim'],
+    default='k_euler_ancestral'
+)
+@option(
+    'steps', int,
+    description='Interations to refine the image',
+    default=28,
+    min_value=1,
+    max_value=28,
+)
+@option(
+    'scale', int,
+    description='Prompt followness',
+    default=11,
+    min_value=1,
+    max_value=99,
+)
+@option(
+    'seed', int,
+    description='Randomness seed',
+    min_value=0,
+    max_value=0xffffffff,
+    required=False
+)
+@option(
+    'ucp', str,
+    description='Preset Undesired content.',
+    choices=['Low Quality + Bad Anatomy', 'Low Quality', 'None'],
+    default='Low Quality + Bad Anatomy'
+)
+@option(
+    'uc', str,
+    description='Undesired content',
+    default=''
+)
+@verify_permission
+async def naigen(ctx, tags, model, sampler, steps, scale, seed, ucp, uc):
+    await ctx.respond(f"Please wait while generating image with `{tags}`")
+    ucp = UCP_OPTIONS.index(ucp)
+    params = {
+        'tags': tags,
+        'model': model,
+        'sampler': sampler,
+        'steps': steps,
+        'scale': scale,
+        'uc': uc,
+        'ucp': ucp
+    }
+    log_info(f"{ctx.author.name}: {tags}\n{params}")
+    if seed:
+        params['seed'] = seed
+
+    params['token'] = NAI_API_TOKEN
+    loop = Bot.loop
+    fname = f"cache/.{hash(str(datetime.now())+ctx.author.name+tags)}.png"
+    res = await loop.run_in_executor(None, request_nai_gen, fname, params)
+    if res.status_code == 200:
         with open(fname, 'rb') as fp:
-            return await ctx.reply(file=discord.File(fp))
+            await ctx.respond(f"seed: {res.json()['seed']}", file=discord.File(fp))
     else:
-        return await ctx.reply(f"Generation failed with status {res.status_code}")
+        await ctx.respond(f"Generation failed with status {res}")
 
 def run():
-    global PermissionData
-    with open(_G.PERM_FILE, 'r') as fp:
-        PermissionData = json.load(fp)
     Bot.run(os.getenv('DC_BOT_TOKEN'))

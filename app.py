@@ -7,9 +7,13 @@ from _G import log_error,log_info,log_warning,log_debug
 from flask_config import DevelopmentConfig,ProductionConfig
 from datetime import datetime,timedelta
 import novelai as nai
+from random import randint
+
 
 app = Flask(__name__)
 app.initialized = False
+
+LONG_MAX_VAL = 0xffffffff
 
 PermissionData = {'0': {}}
 NaiGenCache = {
@@ -52,16 +56,31 @@ def request_nai_image():
 
     tags  = request.form.get('tags')
     seed  = request.form.get('seed')
+    steps = request.form.get('steps')
     scale = request.form.get('scale')
     sampler = request.form.get('sampler')
     model = request.form.get('model')
+    ucp = request.form.get('ucp')
+    uc = request.form.get('uc')
     
     if not tags:
         return jsonify({'msg': 'Bad tags'}),400
 
     kwargs = {}
     if seed:
+        try:
+            kwargs['seed'] = int(seed)
+        except Exception:
+            pass
+    else:
+        seed = randint(0, LONG_MAX_VAL)
         kwargs['seed'] = seed
+    
+    if steps:
+        try:
+            kwargs['steps'] = int(steps)
+        except Exception:
+            pass
     if scale:
         try:
             kwargs['scale'] = int(scale)
@@ -71,6 +90,13 @@ def request_nai_image():
         kwargs['sampler'] = sampler
     if model:
         kwargs['model'] = model
+    if uc:
+        kwargs['uc'] = uc
+    if ucp:
+        try:
+            kwargs['ucp'] = int(ucp)
+        except Exception:
+            pass
 
     log_info("Generation extra arguments:", kwargs)
     NaiGenCache[token]['quota'] += 1
@@ -80,7 +106,7 @@ def request_nai_image():
     elif ret == _G.ERRNO_FAILED:
         return jsonify({'msg': 'Server error'}),500
 
-    return jsonify({'data': ret}),200
+    return jsonify({'data': ret, 'seed': seed}),200
 
 @app.route('/api/ReloadConfig', methods=['POST'])
 def reload_config():

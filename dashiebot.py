@@ -30,7 +30,6 @@ NAI_API_HEADERS = {
     'Accept-Encoding': 'gzip, deflate',
     'Accept': '*/*',
     'Connection': 'keep-alive',
-    'Content-Type': 'application/json',
     'User-Agent': os.getenv('NAI_API_USERAGENT')
 }
 

@@ -30,6 +30,7 @@ def application_reload():
     nai.reload()
     with open(_G.PERM_FILE, 'r') as fp:
         PermissionData = json.load(fp)
+    log_info("Config reloaded")
 
 ### Routes
 @app.route('/rdt3k/api/RequestNaiImage', methods=['POST'])
@@ -124,6 +125,7 @@ if not app.initialized:
         app.config.from_object(ProductionConfig)
     else:
         app.config.from_object(DevelopmentConfig)
+    log_info('App initizlied')
 
 if __name__ == '__main__':
     try:

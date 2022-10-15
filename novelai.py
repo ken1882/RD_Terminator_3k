@@ -69,7 +69,7 @@ UC_PRESET = {
 
 def is_params_ok(tags, seed, steps, scale, sampler, model, uc, ucp):
     try:
-        if len(tags) > 800 or len(uc) > 800:
+        if len(tags) > 2000 or len(uc) > 2000:
             return False
         if steps < 1 or steps > 28:
             return False
@@ -88,6 +88,20 @@ def is_params_ok(tags, seed, steps, scale, sampler, model, uc, ucp):
         return False
     return True
 
+def send_request(payload):
+    global POST_HEADERS
+    log_info(f"Generating image with tags `{payload['input']}`#{payload['parameters']['seed']}")
+    res = requests.post(
+        'https://api.novelai.net/ai/generate-image',
+        json.dumps(payload),
+        headers=POST_HEADERS
+    )
+    if res.status_code != 201:
+        log_error("An error occurred during generating image")
+        log_error(res, res.json())
+        return _G.ERRNO_FAILED
+    return res.content.decode()
+
 def generate_image(tags, seed=None, steps=28, scale=11, sampler='k_euler_ancestral', model='naf', uc='', ucp=0):
     global POST_HEADERS,IMG_GEN_INPUT
     payload = copy(IMG_GEN_INPUT)
@@ -105,16 +119,11 @@ def generate_image(tags, seed=None, steps=28, scale=11, sampler='k_euler_ancestr
     payload['parameters']['sampler'] = sampler
     payload['parameters']['ucPreset'] = ucp
     payload['parameters']['uc'] = uc
-    log_info(f"Generating image with tags `{tags}`#{seed}")
-    res = requests.post(
-        'https://api.novelai.net/ai/generate-image',
-        json.dumps(payload),
-        headers=POST_HEADERS
-    )
-    if res.status_code != 201:
-        log_error("An error occurred during generating image")
-        log_error(res, res.json())
-        return _G.ERRNO_FAILED
+
     log_info(f"Done image generation with tags `{tags}`#{seed}")
-    raw = res.content.decode().split('\n')[2]
+    raw = send_request(payload)
+    if len(raw) < 10:
+        log_warning(f"Remote returned empty result, retry")
+        raw = send_request(payload)
+    raw = raw.split('\n')[2]
     return raw.split('data:')[1]

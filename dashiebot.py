@@ -21,15 +21,16 @@ _intents.message_content = True
 Bot = commands.Bot(
     command_prefix='>',
     intents=_intents,
-    help_command=commands.DefaultHelpCommand(
-        no_category='commands'
-    )
+    # help_command=commands.DefaultHelpCommand(
+    #     no_category='commands'
+    # )
 )
 
 NAI_API_HEADERS = {
     'Accept-Encoding': 'gzip, deflate',
     'Accept': '*/*',
     'Connection': 'keep-alive',
+    'Content-Type': 'application/json',
     'User-Agent': os.getenv('NAI_API_USERAGENT')
 }
 
@@ -132,8 +133,19 @@ async def ping(ctx):
     msg = f"🏓 Pong! {round(Bot.latency * 1000)}ms"
     return await ctx.reply(msg)
 
+@Bot.command(name='reload')
+@verify_permission
+async def reload(ctx):
+    _G.reload()
+    requests.post(
+        f"{NAI_API_HOST}/api/ReloadConfig", 
+        json.dumps({'token': os.getenv('FLASK_REFRESH_KEY')}), 
+        headers=NAI_API_HEADERS
+    )
+    return await ctx.reply('Configuation reloaded')
+
 def request_nai_gen(fname, params):
-    res = requests.post(f"{NAI_API_HOST}/api/RequestNaiImage", params, headers=NAI_API_HEADERS)
+    res = requests.post(f"{NAI_API_HOST}/api/RequestNaiImage", json.dumps(params), headers=NAI_API_HEADERS)
     if res.status_code == 200:
         with open(fname, 'wb') as fp:
             fp.write(b64decode(res.json()['data']))

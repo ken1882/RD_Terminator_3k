@@ -2,5 +2,5 @@ py-cord
 discord
 requests
 flask
-dotenv
+python-dotenv
 gunicorn

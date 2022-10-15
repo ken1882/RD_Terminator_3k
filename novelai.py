@@ -69,7 +69,7 @@ UC_PRESET = {
 
 def is_params_ok(tags, seed, steps, scale, sampler, model, uc, ucp):
     try:
-        if len(tags) > 500 or len(uc) > 500:
+        if len(tags) > 800 or len(uc) > 800:
             return False
         if steps < 1 or steps > 28:
             return False

@@ -35,11 +35,16 @@ def application_reload():
 ### Routes
 @app.route('/rdt3k/api/RequestNaiImage', methods=['POST'])
 def request_nai_image():
-    token = request.form.get('token')
+    try:
+        params = request.get_json(force=True)
+    except Exception:
+        return jsonify({'msg': 'Unsupported media type'}),415
+    
+    token = params.get('token')
     pdat = next((d for d in PermissionData['0']['NAI_ALLOWED_KEYS'] if d['Secret'] == token), None)
     if not pdat:
         return jsonify({'msg': 'Forbidden'}),403
-
+        
     if token not in NaiGenCache:
         NaiGenCache[token] = {
             'quota': 0,
@@ -55,14 +60,16 @@ def request_nai_image():
         else:
             return jsonify({'msg': 'Try after '+str(cdat['ttl'])}),429
 
-    tags  = request.form.get('tags')
-    seed  = request.form.get('seed')
-    steps = request.form.get('steps')
-    scale = request.form.get('scale')
-    sampler = request.form.get('sampler')
-    model = request.form.get('model')
-    ucp = request.form.get('ucp')
-    uc = request.form.get('uc')
+    
+    
+    tags  = params.get('tags')
+    seed  = params.get('seed')
+    steps = params.get('steps')
+    scale = params.get('scale')
+    sampler = params.get('sampler')
+    model = params.get('model')
+    ucp = params.get('ucp')
+    uc = params.get('uc')
     
     if not tags:
         return jsonify({'msg': 'Bad tags'}),400
@@ -111,7 +118,12 @@ def request_nai_image():
 
 @app.route('/rdt3k/api/ReloadConfig', methods=['POST'])
 def reload_config():
-    token = request.form.get('token')
+    try:
+        params = request.get_json(force=True)
+    except Exception:
+        return jsonify({'msg': 'Unsupported media type'}),415
+    
+    token = params.get('token')
     _pk   = os.getenv('FLASK_REFRESH_KEY')
     if not _pk or token != os.getenv('FLASK_REFRESH_KEY'):
         return jsonify({'msg': 'Forbidden'}),403

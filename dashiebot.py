@@ -30,6 +30,7 @@ NAI_API_HEADERS = {
     'Accept-Encoding': 'gzip, deflate',
     'Accept': '*/*',
     'Connection': 'keep-alive',
+    'Content-Type': 'application/json',
     'User-Agent': os.getenv('NAI_API_USERAGENT')
 }
 
@@ -133,7 +134,7 @@ async def ping(ctx):
     return await ctx.reply(msg)
 
 def request_nai_gen(fname, params):
-    res = requests.post(f"{NAI_API_HOST}/api/RequestNaiImage", params, headers=NAI_API_HEADERS)
+    res = requests.post(f"{NAI_API_HOST}/api/RequestNaiImage", json.dumps(params), headers=NAI_API_HEADERS)
     if res.status_code == 200:
         with open(fname, 'wb') as fp:
             fp.write(b64decode(res.json()['data']))

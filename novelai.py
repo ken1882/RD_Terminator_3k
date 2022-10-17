@@ -98,7 +98,7 @@ def send_request(payload):
     )
     if res.status_code != 201:
         log_error("An error occurred during generating image")
-        log_error(res, res.json())
+        log_error(res, res.content)
         return _G.ERRNO_FAILED
     return res.content.decode()
 

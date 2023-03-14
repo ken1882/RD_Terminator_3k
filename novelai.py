@@ -98,7 +98,7 @@ def send_request(payload):
     )
     if res.status_code != 201:
         log_error("An error occurred during generating image")
-        log_error(res, res.json())
+        log_error(res, res.content)
         return _G.ERRNO_FAILED
     return res.content.decode()
 
@@ -119,11 +119,15 @@ def generate_image(tags, seed=None, steps=28, scale=11, sampler='k_euler_ancestr
     payload['parameters']['sampler'] = sampler
     payload['parameters']['ucPreset'] = ucp
     payload['parameters']['uc'] = uc
-    
-    log_info(f"Done image generation with tags `{tags}`#{seed}")
-    raw = send_request(payload)
-    if len(raw) < 10:
-        log_warning(f"Remote returned empty result, retry")
+
+    depth = 0
+    while depth < 3:
         raw = send_request(payload)
+        if len(raw) < 10:
+            depth += 1
+            log_warning(f"Remote returned empty result, retry (depth={depth})")
+        else:
+            log_info(f"Done image generation with tags `{tags}`#{seed}")
+            break
     raw = raw.split('\n')[2]
     return raw.split('data:')[1]

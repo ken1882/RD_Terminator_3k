@@ -95,7 +95,7 @@ async def update():
     ar = []
     for n in news:
         if not olds or n['id'] > olds[0]['id']:
-            ar.append(n)
+            ar.insert(0, n)
         else:
             break
     for a in ar:

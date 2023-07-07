@@ -99,6 +99,7 @@ def parse_news_index(doc):
             tag_img = li.find('img')['src']
             obj['tag'] = next((i for i in TSK_TAG_MAP if TSK_TAG_MAP[i] == tag_img), 7)
             id = re.search(r"info_id=(\d+)", li.find('div', 'navi_info_inner_list_card')['data-detail_url']).group(1)
+            obj['id'] = int(id)
             obj['message'] = get_news_detail(id)
             ret.append(obj)
         except Exception as err:
@@ -137,7 +138,9 @@ async def update():
         utils.handle_exception(err)
         return
     olds = get_old_news()
-    o_cksum = int(datetime.fromisoformat(olds[0]['postedAt']).timestamp())
+    o_cksum = 0
+    if olds:
+        o_cksum = int(datetime.fromisoformat(olds[0]['postedAt']).timestamp())
     n_cksum = int(datetime.fromisoformat(news[0]['postedAt']).timestamp())
     if o_cksum > n_cksum:
         _G.log_warning(f"Old news newer than latest news ({o_cksum} > {n_cksum})")
@@ -145,10 +148,10 @@ async def update():
         # _G.log_info("No news, skip")
         return
 
-    _G.log_info("Gathering news")
+    _G.log_info("Gathering TSK news")
     ar = []
     for n in news:
-        if n['id'] > olds[0]['id']:
+        if not olds or n['id'] > olds[0]['id']:
             ar.append(n)
         else:
             break

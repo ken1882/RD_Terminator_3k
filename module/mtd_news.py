@@ -81,7 +81,9 @@ async def update():
         utils.handle_exception(err)
         return
     olds = get_old_news()
-    o_cksum = int(datetime.fromisoformat(olds[0]['postedAt']).timestamp())
+    o_cksum = 0
+    if olds:
+        o_cksum = int(datetime.fromisoformat(olds[0]['postedAt']).timestamp())
     n_cksum = int(datetime.fromisoformat(news[0]['postedAt']).timestamp())
     if o_cksum > n_cksum:
         _G.log_warning(f"Old news newer than latest news ({o_cksum} > {n_cksum})")
@@ -89,10 +91,10 @@ async def update():
         # _G.log_info("No news, skip")
         return
 
-    _G.log_info("Gathering news")
+    _G.log_info("Gathering MTD news")
     ar = []
     for n in news:
-        if n['id'] > olds[0]['id']:
+        if not olds or n['id'] > olds[0]['id']:
             ar.append(n)
         else:
             break

@@ -75,7 +75,7 @@ async def send_new_events(news):
     if not TimerNewsChannels:
         return
     for n in news:
-        node = BS(n['name'])
+        node = BS(n['name'], 'lxml')
         title = node.text
         href = node.find('a')['href']
         st = datetime.fromtimestamp(n['start']//1000)+timedelta(hours=TIMEZONE_DELTA)

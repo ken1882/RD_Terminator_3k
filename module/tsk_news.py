@@ -13,8 +13,8 @@ NEWS_URL    = os.getenv('TSK_NEWS_URL')
 WEBHOOK_URL = os.getenv('TSK_WEBHOOK_URL')
 
 TSK_TAG_MAP = {
-    1: '',
-    2: '',
+    1: 'https://dz87n5pasv7ep.cloudfront.net/common/img/info/flag/g6YYKpKcmwayayE6r1NzuajDNBbNlgmqloBM887n.png',
+    2: 'https://dz87n5pasv7ep.cloudfront.net/common/img/info/flag/l6hNGLymu3xLxeiteEa9BN6NvISlomlbeSeDNlXr.png',
     3: 'https://dz87n5pasv7ep.cloudfront.net/common/img/info/flag/g6eJW2EO2z1bbE0EVsrRbH9DjxpbUyTGkGIQUKdP.png',
     4: 'https://dz87n5pasv7ep.cloudfront.net/common/img/info/flag/cE8PMgnMwRNJwEsgtrmbn7zpi2SUmSybrixzMNiP.png',
     5: 'https://dz87n5pasv7ep.cloudfront.net/common/img/info/flag/x0D2uRHUoq63ubJ1PZmnhGN8p9E0KdvCz3WE9gGL.png',

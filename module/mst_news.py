@@ -20,7 +20,7 @@ MST_NEWS_TAG = {
   5: 'CAMPAIGN',
   6: 'BUG',
   7: 'MISC',
-  8: 'IMPORTANT',
+  8: 'IMPORTARTANT',
   9: 'SELL'
 }
 

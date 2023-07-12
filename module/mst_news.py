@@ -83,7 +83,7 @@ def get_news_data():
         res = requests.get(NEWS_URL)
         ret = []
         for a in res.json()['articles']:
-            id = a['articleUrl']
+            id = int(a['articleUrl'])
             ret.append({
                 'id': id,
                 'title': a['title'],

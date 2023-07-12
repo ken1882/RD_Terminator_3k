@@ -7,23 +7,12 @@ from bs4 import BeautifulSoup as BS
 import _G
 import utils
 
-PREV_NEWS_FILE = '.tsk_prevnews.json'
+PREV_NEWS_FILE = '.mst_prevnews.json'
 
-NEWS_URL    = os.getenv('TSK_NEWS_URL')
-WEBHOOK_URL = os.getenv('TSK_WEBHOOK_URL')
+NEWS_URL    = os.getenv('MST_NEWS_URL')
+WEBHOOK_URL = os.getenv('MST_WEBHOOK_URL')
 
-TSK_TAG_MAP = {
-    1: 'https://dz87n5pasv7ep.cloudfront.net/common/img/info/flag/g6YYKpKcmwayayE6r1NzuajDNBbNlgmqloBM887n.png',
-    2: 'https://dz87n5pasv7ep.cloudfront.net/common/img/info/flag/l6hNGLymu3xLxeiteEa9BN6NvISlomlbeSeDNlXr.png',
-    3: 'https://dz87n5pasv7ep.cloudfront.net/common/img/info/flag/g6eJW2EO2z1bbE0EVsrRbH9DjxpbUyTGkGIQUKdP.png',
-    4: 'https://dz87n5pasv7ep.cloudfront.net/common/img/info/flag/cE8PMgnMwRNJwEsgtrmbn7zpi2SUmSybrixzMNiP.png',
-    5: 'https://dz87n5pasv7ep.cloudfront.net/common/img/info/flag/x0D2uRHUoq63ubJ1PZmnhGN8p9E0KdvCz3WE9gGL.png',
-    6: 'https://dz87n5pasv7ep.cloudfront.net/common/img/info/flag/CgGLgT69zSh3puuo6nLC5o2mBvcheZrfrBFJJsuK.png',
-    7: 'https://dz87n5pasv7ep.cloudfront.net/common/img/info/flag/VZax2h8g6RCltUuD5kHm8Mup8GOMOeKpgJHCgIYT.png',
-    8: 'https://dz87n5pasv7ep.cloudfront.net/common/img/info/flag/oMP7Kmbrt03kOkeyJlzskPqIMH8WmCr3x4SSgw5h.png'
-}
-
-TSK_NEWS_TAG = {
+MST_NEWS_TAG = {
   1: 'MAINTENANCE',
   2: 'UPDATE',
   3: 'GACHA',
@@ -31,10 +20,11 @@ TSK_NEWS_TAG = {
   5: 'CAMPAIGN',
   6: 'BUG',
   7: 'MISC',
-  8: 'IMPORTANT'
+  8: 'IMPORTANT',
+  9: 'SELL'
 }
 
-TSK_NEWS_ICON = {
+MST_NEWS_ICON = {
   1: 'https://cdn-icons-png.flaticon.com/512/777/777081.png',
   2: 'https://cdn.icon-icons.com/icons2/1508/PNG/512/updatemanager_104426.png',
   3: 'https://cdn-icons-png.flaticon.com/512/4230/4230567.png',
@@ -43,9 +33,10 @@ TSK_NEWS_ICON = {
   6: 'https://www.iconsdb.com/icons/preview/red/error-7-xxl.png',
   7: 'https://cdn-icons-png.flaticon.com/512/1827/1827301.png',
   8: 'https://www.iconsdb.com/icons/preview/red/error-7-xxl.png',
+  9: 'https://cdn-icons-png.flaticon.com/512/4021/4021642.png'
 }
 
-TSK_NEWS_COLOR = {
+MST_NEWS_COLOR = {
   1: 0xfc3aef,
   2: 0x5299f7,
   3: 0xfad73c,
@@ -53,7 +44,8 @@ TSK_NEWS_COLOR = {
   5: 0xff5cb0,
   6: 0xdb043e,
   7: 0xcccccc,
-  8: 0xdb043e
+  8: 0xdb043e,
+  9: 0xfad73c,
 }
 
 TSK_VOCAB_JP = {
@@ -65,7 +57,8 @@ TSK_VOCAB_JP = {
     5: 'キャンペーン',
     6: '不具合',
     7: 'その他',
-    8: '重要'
+    8: '重要',
+    9: '販売'
   }
 }
 
@@ -76,42 +69,28 @@ def get_webhook_url():
 def get_news_detail(id):
     ret = ''
     try:
-        res = requests.get(f"https://prod-dmmclientr.twinkle-star-knights.com/api/info/detail?info_id={id}")
+        res = requests.get(f"{NEWS_URL}?id={id}")
         doc = BS(res.content, features='lxml')
-        for p in doc.findAll('p'):
-            ret += p.decode_contents().replace('<br/>', '\n') + '\n\n'
+        ret = doc.text
     except Exception as err:
         utils.handle_exception(err)
         return ''
     return BS(ret, features='lxml').text
 
-def parse_news_index(doc):
-    ret = []
-    ul = doc.find('ul', {'class': 'navi_info_inner_list'})
-    for li in ul.children:
-        txt = [s.strip() for s in li.text.split('\n') if s.strip()]
-        if len(txt) < 2:
-            continue
-        obj = {}
-        try:
-            obj['title'] = txt[1]
-            obj['postedAt'] = txt[0].replace('/', '-')
-            tag_img = li.find('img')['src']
-            obj['tag'] = next((i for i in TSK_TAG_MAP if TSK_TAG_MAP[i] == tag_img), 7)
-            id = re.search(r"info_id=(\d+)", li.find('div', 'navi_info_inner_list_card')['data-detail_url']).group(1)
-            obj['id'] = int(id)
-            obj['message'] = get_news_detail(id)
-            ret.append(obj)
-        except Exception as err:
-            _G.log_error("Malformed news post object: ", txt)
-            utils.handle_exception(err)
-    return ret
-
 def get_news_data():
     ret = {}
     try:
         res = requests.get(NEWS_URL)
-        ret = parse_news_index(BS(res.content, features='lxml'))
+        ret = []
+        for a in res.json()['articles']:
+            id = a['articleUrl']
+            ret.append({
+                'id': id,
+                'title': a['title'],
+                'postedAt': a['date'],
+                'tag': next((i for i,v in MST_NEWS_TAG.items() if a['type'].upper() == v), 7),
+                'message': get_news_detail(id)
+            })
     except Exception as err:
         utils.handle_exception(err)
     return ret
@@ -148,7 +127,7 @@ async def update():
         # _G.log_info("No news, skip")
         return
 
-    _G.log_info("Gathering TSK news")
+    _G.log_info("Gathering MST news")
     ar = []
     for n in news:
         if not olds or n['id'] > olds[0]['id'] or (n['id'] == olds[0]['id'] and n['message'] != olds[0]['message']):
@@ -169,11 +148,11 @@ def send_message(obj):
     payload['embeds'] = [{
         'author': {
             'name': TSK_VOCAB_JP['NEWS_TAG'][obj['tag']],
-            'icon_url': TSK_NEWS_ICON[obj['tag']],
+            'icon_url': MST_NEWS_ICON[obj['tag']],
         },
         'title': f"**{obj['title']}**",
         'description': f"<t:{int(datetime.fromisoformat(obj['postedAt']).timestamp())}>",
-        'color': TSK_NEWS_COLOR[obj['tag']],
+        'color': MST_NEWS_COLOR[obj['tag']],
         'fields': []
     }]
     # this will fail if total length is over 6000

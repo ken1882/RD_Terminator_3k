@@ -21,6 +21,10 @@ if _G.MODULE_TSKNEWS:
     import module.tsk_news as tsk_news
     Bot.dashie_modules.append(tsk_news)
 
+if _G.MODULE_MSTNEWS:
+    import module.mst_news as mst_news
+    Bot.dashie_modules.append(mst_news)
+
 if __name__ == '__main__':
     try:
         dashiebot.run()

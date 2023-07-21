@@ -21,7 +21,7 @@ Agent = None
 
 def parse_tweet(tweet):
     ret = {}
-    ret['id'] = tweet.id
+    ret['id'] = int(tweet.id)
     ret['postedAt'] = int(tweet.created_on.timestamp())
     ret['message'] = tweet.text
     ret['account'] = tweet.author.username
@@ -59,8 +59,10 @@ def get_old_tweets(account, PREV_TWEETS_FILE):
 
 async def update():
     global TWITTER_LISTENERS, Agent
+    if not Agent:
+        return
     for account, webhook in TWITTER_LISTENERS.items():
-        PREV_NEWS_FILE = f"{account}_prevtweets.json"
+        PREV_NEWS_FILE = f".{account}_prevtweets.json"
         news = []
         try:
             news = get_new_tweets(account)
@@ -68,11 +70,11 @@ async def update():
         except Exception as err:
             utils.handle_exception(err)
             return
-        olds = get_old_tweets()
+        olds = get_old_tweets(account, PREV_NEWS_FILE)
         o_cksum = 0
         if olds:
-            o_cksum = int(datetime.fromisoformat(olds[0]['postedAt']).timestamp())
-        n_cksum = int(datetime.fromisoformat(news[0]['postedAt']).timestamp())
+            o_cksum = olds[0]['postedAt']
+        n_cksum = news[0]['postedAt']
         if o_cksum > n_cksum:
             _G.log_warning(f"Old news newer than latest news ({o_cksum} > {n_cksum})")
         elif o_cksum == n_cksum and news[0]['message'] == olds[0]['message']:
@@ -106,7 +108,13 @@ def send_message(url, obj):
 def init():
     global Agent
     Agent = Twitter('session')
-    Agent.sign_in(os.getenv('TWITTER_USERNAME'), os.getenv('TWITTER_PASSWORD'))
+    try:
+        Agent.connect()
+    except Exception as err:
+        utils.handle_exception(err)
+        _G.log_info("Using username/pwd to sign in")
+        Agent.sign_in(os.getenv('TWITTER_USERNAME'), os.getenv('TWITTER_PASSWORD'))
+    _G.log_info("Twitter initialized")
 
 def reload():
     pass

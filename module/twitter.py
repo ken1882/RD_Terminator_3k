@@ -62,6 +62,7 @@ async def update():
     if not Agent:
         return
     for account, webhook in TWITTER_LISTENERS.items():
+        _G.log_debug(f"Getting tweets from {account}")
         PREV_NEWS_FILE = f".{account}_prevtweets.json"
         news = []
         try:
@@ -69,7 +70,7 @@ async def update():
             news = sorted(news, key=lambda o: -o['id'])
         except Exception as err:
             utils.handle_exception(err)
-            return
+            continue
         olds = get_old_tweets(account, PREV_NEWS_FILE)
         o_cksum = 0
         if olds:
@@ -78,10 +79,10 @@ async def update():
         if o_cksum > n_cksum:
             _G.log_warning(f"Old news newer than latest news ({o_cksum} > {n_cksum})")
         elif o_cksum == n_cksum and news[0]['message'] == olds[0]['message']:
-            # _G.log_info("No news, skip")
-            return
+            _G.log_debug("No news, skip")
+            continue
 
-        _G.log_info(f"Gathering {account} tweets")
+        _G.log_info(f"Gathering {account} new tweets")
         ar = []
         for n in news:
             if not olds or n['id'] > olds[0]['id'] or (n['id'] == olds[0]['id'] and n['message'] != olds[0]['message']):

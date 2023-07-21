@@ -129,3 +129,6 @@ def send_message(obj):
 
 def init():
     pass
+
+def reload():
+    pass

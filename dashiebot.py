@@ -98,6 +98,8 @@ verify_permission = commands.check(_verify_permission)
 
 @Bot.event
 async def on_ready():
+    if main_loop.is_running():
+        return
     print(f"{Bot.user.name} has connected to Discord!")
     for m in Bot.dashie_modules:
         m.init()

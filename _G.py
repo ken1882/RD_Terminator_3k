@@ -45,10 +45,11 @@ PermissionData = {}
 CommandLimit   = {}
 
 MODULE_NOVELAI = False
-MODULE_FFXIV   = True
+MODULE_FFXIV   = False
 MODULE_MTDNEWS = True
 MODULE_TSKNEWS = True
 MODULE_MSTNEWS = True
+MODULE_TWITTER = True
 
 def reload():
   global PermissionData,CommandLimit

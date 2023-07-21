@@ -25,6 +25,10 @@ if _G.MODULE_MSTNEWS:
     import module.mst_news as mst_news
     Bot.dashie_modules.append(mst_news)
 
+if _G.MODULE_TWITTER:
+    import module.twitter as twitter
+    Bot.dashie_modules.append(twitter)
+
 if __name__ == '__main__':
     try:
         dashiebot.run()

@@ -17,7 +17,13 @@ TWITTER_LISTENERS = {
     'monmusu_td': os.getenv('TSK_TWT_WEBHOOK')
 }
 
+ACTIVE_HOURS    = (range(11,13),)
+LAZY_HOURS      = (range(20, 24), range(0, 9))
+NORMAL_INTERVAL = 5
+LAZY_INTERVAL   = 60
+
 Agent = None
+TickCounter = 0
 
 def parse_tweet(tweet):
     ret = {}
@@ -58,8 +64,18 @@ def get_old_tweets(account, PREV_TWEETS_FILE):
 
 
 async def update():
-    global TWITTER_LISTENERS, Agent
+    global TWITTER_LISTENERS, Agent, TickCounter
     if not Agent:
+        return
+    TickCounter += 1
+    if any(datetime.now().hour in t for t in LAZY_HOURS) and TickCounter % LAZY_INTERVAL != 0:
+        _G.log_debug(f"Lazy hour, skip (Tick={TickCounter})")
+        return
+    elif any(datetime.now().hour in t for t in ACTIVE_HOURS):
+        _G.log_debug(f"Active hour (Tick={TickCounter})")
+        pass
+    elif TickCounter % NORMAL_INTERVAL != 0:
+        _G.log_debug(f"Normal hour (Tick={TickCounter})")
         return
     for account, webhook in TWITTER_LISTENERS.items():
         _G.log_debug(f"Getting tweets from {account}")

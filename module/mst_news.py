@@ -118,13 +118,14 @@ async def update():
         return
     olds = get_old_news()
     o_cksum = 0
+    _G.log_debug("Checking MST news")
     if olds:
         o_cksum = int(datetime.fromisoformat(olds[0]['postedAt']).timestamp())
     n_cksum = int(datetime.fromisoformat(news[0]['postedAt']).timestamp())
     if o_cksum > n_cksum:
         _G.log_warning(f"Old news newer than latest news ({o_cksum} > {n_cksum})")
     elif o_cksum == n_cksum and news[0]['message'] == olds[0]['message']:
-        # _G.log_info("No news, skip")
+        _G.log_debug("No news, skip")
         return
 
     _G.log_info("Gathering MST news")

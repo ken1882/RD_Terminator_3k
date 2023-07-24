@@ -80,6 +80,11 @@ async def update():
     except Exception as err:
         utils.handle_exception(err)
         return
+    if not news or 'service unavailable' in news[0]['message'].lower():
+        _G.log_warning("News data endpoint failure:")
+        if news:
+            _G.log_warning(news[0]['message'])
+        return
     olds = get_old_news()
     o_cksum = 0
     _G.log_debug("Checking MTD news")

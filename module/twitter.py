@@ -14,19 +14,23 @@ PREV_TWEETS_FILE = '.prevtweets.json'
 TWITTER_LISTENERS = {
     'mist_staff': os.getenv('MST_TWT_WEBHOOK'),
     'starknights_PR': os.getenv('MTD_TWT_WEBHOOK'),
-    'monmusu_td': os.getenv('TSK_TWT_WEBHOOK')
+    'monmusu_td': os.getenv('TSK_TWT_WEBHOOK'),
+    'EN_BlueArchive': os.getenv('BAH_TWT_WEBHOOK'),
+    'Blue_ArchiveJP': os.getenv('BAH_TWT_WEBHOOK'),
 }
 
 ACTIVE_HOURS    = (range(11,13),)
 LAZY_HOURS      = (range(20, 24), range(0, 9))
 NORMAL_INTERVAL = 5
-LAZY_INTERVAL   = 60
+LAZY_INTERVAL   = 30
 
 Agent = None
 TickCounter = 0
 
 def parse_tweet(tweet):
     ret = {}
+    if not tweet.created_on:
+        return None
     ret['id'] = int(tweet.id)
     ret['postedAt'] = int(tweet.created_on.timestamp())
     ret['message'] = tweet.text
@@ -42,11 +46,16 @@ def get_new_tweets(account):
             # only interpret first Thread level
             if type(t) == TweetThread:
                 for t2 in t:
-                    ret.append(parse_tweet(t2))
+                    pt = parse_tweet(t2)
+                    if pt:
+                        ret.append(pt)
             else:
-                ret.append(parse_tweet(t))
+                pt = parse_tweet(t)
+                if pt:
+                    ret.append(pt)
     except Exception as err:
         utils.handle_exception(err)
+        connect_twitter()
     ret = sorted(ret, key=lambda o: -o['id'])
     return ret
 
@@ -122,7 +131,7 @@ def send_message(url, obj):
         }
     )
 
-def init():
+def connect_twitter():
     global Agent
     Agent = Twitter('session')
     try:
@@ -131,6 +140,9 @@ def init():
         utils.handle_exception(err)
         _G.log_info("Using username/pwd to sign in")
         Agent.sign_in(os.getenv('TWITTER_USERNAME'), os.getenv('TWITTER_PASSWORD'))
+
+def init():
+    connect_twitter()
     _G.log_info("Twitter initialized")
 
 def reload():

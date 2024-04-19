@@ -1,4 +1,4 @@
-py-cord==2.4.1.dev38+g2e9ab617
+py-cord==2.4.1
 discord==2.2.2
 requests
 flask

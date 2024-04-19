@@ -64,7 +64,7 @@ TSK_VOCAB_JP = {
 
 def get_webhook_url():
     global WEBHOOK_URL
-    return WEBHOOK_URL
+    return WEBHOOK_URL or ''
 
 def get_news_detail(id):
     ret = ''
@@ -167,7 +167,9 @@ def send_message(obj):
             'name': " \u200b", # zero-width space
             'value': msg
         })
-    return requests.post(get_webhook_url(), json=payload)
+    urls = get_webhook_url().split(',')
+    for url in urls:
+        requests.post(url, json=payload)
 
 def init():
     pass

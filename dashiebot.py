@@ -14,7 +14,7 @@ from pprint import pprint
 _intents = discord.Intents.default()
 _intents.message_content = True
 Bot = commands.Bot(
-    command_prefix='>',
+    command_prefix='~>>',
     intents=_intents,
     # help_command=commands.DefaultHelpCommand(
     #     no_category='commands'

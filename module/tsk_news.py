@@ -6,6 +6,8 @@ from datetime import datetime
 from bs4 import BeautifulSoup as BS
 import _G
 import utils
+import warnings
+warnings.simplefilter("ignore")
 
 PREV_NEWS_FILE = '.tsk_prevnews.json'
 

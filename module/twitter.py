@@ -12,20 +12,40 @@ from tweety.types.twDataTypes import TweetThread
 PREV_TWEETS_FILE = '.prevtweets.json'
 
 TWITTER_LISTENERS = {
-    'mist_staff': os.getenv('MST_TWT_WEBHOOK'),
-    'starknights_PR': os.getenv('MTD_TWT_WEBHOOK'),
-    'monmusu_td': os.getenv('TSK_TWT_WEBHOOK'),
-    'EN_BlueArchive': os.getenv('BAH_TWT_WEBHOOK'),
-    'Blue_ArchiveJP': os.getenv('BAH_TWT_WEBHOOK'),
+    'mist_staff': (
+        os.getenv('MST_TWT_WEBHOOK'),
+        os.getenv('MST_GAME_ROLE'),
+    ),
+    'monmusu_td': (
+        os.getenv('MTD_TWT_WEBHOOK'),
+        os.getenv('MTD_GAME_ROLE'),
+    ),
+    'starknights_PR': (
+        os.getenv('TSK_TWT_WEBHOOK'),
+        os.getenv('TSK_GAME_ROLE'),
+    ),
+    'EN_BlueArchive': (
+        os.getenv('BAH_TWT_WEBHOOK'),
+        os.getenv('BAH_GAME_ROLE'),
+    ),
+    'Blue_ArchiveJP': (
+        os.getenv('BAH_TWT_WEBHOOK'),
+        os.getenv('BAH_GAME_ROLE'),
+    ),
+    'azurlane_staff': (
+        os.getenv('AZL_TWT_WEBHOOK'),
+        os.getenv('AZL_GAME_ROLE'),
+    )
 }
 
-ACTIVE_HOURS    = (range(11,13),)
-LAZY_HOURS      = (range(20, 24), range(0, 9))
+ACTIVE_HOURS    = []
+LAZY_HOURS      = [range(20, 24), range(0, 9)]
 NORMAL_INTERVAL = 5
 LAZY_INTERVAL   = 30
 
 Agent = None
 TickCounter = 0
+ErrorCnt = 0
 
 def parse_tweet(tweet):
     ret = {}
@@ -55,7 +75,7 @@ def get_new_tweets(account):
                     ret.append(pt)
     except Exception as err:
         utils.handle_exception(err)
-        connect_twitter()
+        return []
     ret = sorted(ret, key=lambda o: -o['id'])
     return ret
 
@@ -63,6 +83,8 @@ def get_old_tweets(account, PREV_TWEETS_FILE):
     ret = []
     if not os.path.exists(PREV_TWEETS_FILE):
         ret = get_new_tweets(account)
+        if not ret:
+            return []
         with open(PREV_TWEETS_FILE, 'w') as fp:
             json.dump(ret, fp)
     else:
@@ -73,10 +95,14 @@ def get_old_tweets(account, PREV_TWEETS_FILE):
 
 
 async def update():
-    global TWITTER_LISTENERS, Agent, TickCounter
+    global TWITTER_LISTENERS, Agent, TickCounter, ErrorCnt
     if not Agent:
         return
     TickCounter += 1
+    err_threshold = len(TWITTER_LISTENERS.keys())
+    if ErrorCnt > err_threshold:
+        Agent = None
+        connect_twitter()
     if any(datetime.now().hour in t for t in LAZY_HOURS) and TickCounter % LAZY_INTERVAL != 0:
         _G.log_debug(f"Lazy hour, skip (Tick={TickCounter})")
         return
@@ -86,7 +112,8 @@ async def update():
     elif TickCounter % NORMAL_INTERVAL != 0:
         _G.log_debug(f"Normal hour (Tick={TickCounter})")
         return
-    for account, webhook in TWITTER_LISTENERS.items():
+    for account, data in TWITTER_LISTENERS.items():
+        webhook, dc_role_id = data
         _G.log_debug(f"Getting tweets from {account}")
         PREV_NEWS_FILE = f".{account}_prevtweets.json"
         news = []
@@ -95,6 +122,10 @@ async def update():
             news = sorted(news, key=lambda o: -o['id'])
         except Exception as err:
             utils.handle_exception(err)
+            continue
+        if not news:
+            _G.log_error("Unable to get new tweets")
+            ErrorCnt += 1
             continue
         olds = get_old_tweets(account, PREV_NEWS_FILE)
         o_cksum = 0
@@ -114,11 +145,26 @@ async def update():
                 ar.insert(0, n)
             else:
                 break
-        for a in ar:
-            try:
-                send_message(webhook, a)
-            except Exception as err:
-                utils.handle_exception(err)
+        urls = []
+        if webhook:
+            urls = webhook.split(',')
+        try:
+            if ar and dc_role_id:
+                roles = dc_role_id.split(',')
+                for i,role in enumerate(roles):
+                    if not role:
+                        continue
+                    requests.post(
+                        urls[i],
+                        json={
+                            'content': f"<@&{role}>"
+                        }
+                    )
+            for a in ar:
+                for u in urls:
+                    send_message(u, a)
+        except Exception as err:
+            utils.handle_exception(err)
         with open(PREV_NEWS_FILE, 'w') as fp:
             json.dump(news, fp)
 
@@ -136,6 +182,7 @@ def connect_twitter():
     Agent = Twitter('session')
     try:
         Agent.connect()
+        _G.log_info("Twitter connected")
     except Exception as err:
         utils.handle_exception(err)
         _G.log_info("Using username/pwd to sign in")
@@ -143,7 +190,6 @@ def connect_twitter():
 
 def init():
     connect_twitter()
-    _G.log_info("Twitter initialized")
 
 def reload():
     pass

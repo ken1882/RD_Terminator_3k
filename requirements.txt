@@ -1,7 +1,7 @@
-py-cord
-discord
+py-cord==2.4.1.dev38+g2e9ab617
+discord==2.2.2
 requests
 flask
 python-dotenv
-gunicorn
-tweety-ns
+gunicorn==20.1.0
+tweety-ns==0.9

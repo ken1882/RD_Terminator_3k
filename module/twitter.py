@@ -35,6 +35,10 @@ TWITTER_LISTENERS = {
     'azurlane_staff': (
         os.getenv('AZL_TWT_WEBHOOK'),
         os.getenv('AZL_GAME_ROLE'),
+    ),
+    'ff_xiv_jp': (
+        os.getenv('FFXIV_TWT_WEBHOOK'),
+        os.getenv('FFXIV_GAME_ROLE'),
     )
 }
 

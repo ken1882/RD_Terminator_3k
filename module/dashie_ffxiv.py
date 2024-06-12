@@ -24,7 +24,7 @@ FFXIV_TIMER_HEADERS = {
 
 TIMEZONE_DELTA = 0
 TIMER_FILE = '.ffxiv-timers.json'
-TimerNewsChannels = []
+TimerNewsWebhook = os.getenv('FFXIV_TIMER_WEBHOOK')
 LastTimers = {}
 
 try:
@@ -54,25 +54,23 @@ def get_new_timers(olds, news):
 
 async def update():
     global LastTimers
-    res = get_timers()
-    try:
-        dat  = res.json()
-        if 'timers' not in LastTimers:
-            LastTimers['timers'] = []
-        news, olds = get_new_timers(LastTimers['timers'], dat['timers'])
-        # pprint(LastTimers)
-        # pprint(dat)
-        # pprint(news)
-        LastTimers = dat
-        with open(TIMER_FILE, 'w') as fp:
-            json.dump(LastTimers, fp)
-        await send_new_events(news)
-    except Exception as err:
-        _G.handle_exception(err)
+    pass
+    # res = get_timers()
+    # try:
+    #     dat  = res.json()
+    #     if 'timers' not in LastTimers:
+    #         LastTimers['timers'] = []
+    #     news, olds = get_new_timers(LastTimers['timers'], dat['timers'])
+    #     LastTimers = dat
+    #     with open(TIMER_FILE, 'w') as fp:
+    #         json.dump(LastTimers, fp)
+    #     await send_new_events(news)
+    # except Exception as err:
+    #     _G.handle_exception(err)
 
-async def send_new_events(news):
-    global TimerNewsChannels
-    if not TimerNewsChannels:
+def send_new_events(news):
+    global TimerNewsWebhook
+    if not TimerNewsWebhook:
         return
     for n in news:
         node = BS(n['name'], 'lxml')
@@ -86,17 +84,10 @@ async def send_new_events(news):
         msg += f"Starts at:\n{st.strftime('%Y/%m/%d %H:%M:%S')} (UTC{'+' if tz >= 0 else ''}{8+tz})\n"
         msg += f"Ends at:\n{ed.strftime('%Y/%m/%d %H:%M:%S')} (UTC{'+' if tz >= 0 else ''}{8+tz})\n"
         _G.log_info(msg)
-        for ch in TimerNewsChannels:
-            await ch.send(msg)
+        requests.post(TimerNewsWebhook, json={'content': msg})
 
 def reload():
-    return
+    pass
 
 def init():
-    global Bot,TimerNewsChannels
-    channels = [int(n) for n in (os.getenv('FFXIV_TIMER_CHANNEL') or '').split(',')]
-    for guild in Bot.guilds:
-        for channel in guild.text_channels:
-            if channel.id in channels:
-                TimerNewsChannels.append(channel)
-                _G.log_info(f"{guild.name}-{channel} registered FFXIV timers")
+    pass

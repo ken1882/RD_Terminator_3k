@@ -144,6 +144,8 @@ async def update():
         o_cksum = int(o_cksum)
         is_same = is_same_message(news[0]['message'], olds[0]['message'])
         _G.log_debug(f"{account} N/O checksum: {n_cksum}/{o_cksum}, same: {is_same}")
+        if not is_same:
+            _G.log_debug(news[0]['message'], olds[0]['message'])
         if o_cksum > n_cksum:
             _G.log_warning(f"Old news newer than latest news ({o_cksum} > {n_cksum})")
         if o_cksum == n_cksum and is_same:

@@ -148,7 +148,7 @@ async def update():
             _G.log_debug(news[0]['message'], olds[0]['message'])
         if o_cksum > n_cksum:
             _G.log_warning(f"Old news newer than latest news ({o_cksum} > {n_cksum})")
-        if o_cksum == n_cksum and is_same:
+        if o_cksum == n_cksum:# and is_same:
             _G.log_debug("No news, skip")
             continue
 

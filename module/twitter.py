@@ -6,10 +6,9 @@ from datetime import datetime
 from bs4 import BeautifulSoup as BS
 import _G
 import utils
+import hashlib
 from tweety import Twitter
 from tweety.types.twDataTypes import TweetThread
-
-PREV_TWEETS_FILE = '.prevtweets.json'
 
 TWITTER_LISTENERS = {
     'mist_staff': (
@@ -83,20 +82,24 @@ def get_new_tweets(account):
     ret = sorted(ret, key=lambda o: -o['id'])
     return ret
 
-def get_old_tweets(account, PREV_TWEETS_FILE):
+def get_old_tweets(account, prev_file):
     ret = []
-    if not os.path.exists(PREV_TWEETS_FILE):
+    if not os.path.exists(prev_file):
         ret = get_new_tweets(account)
         if not ret:
             return []
-        with open(PREV_TWEETS_FILE, 'w') as fp:
+        with open(prev_file, 'w') as fp:
             json.dump(ret, fp)
     else:
-        with open(PREV_TWEETS_FILE, 'r') as fp:
+        with open(prev_file, 'r') as fp:
             ret = json.load(fp)
     ret = sorted(ret, key=lambda o: -o['id'])
     return ret
 
+def is_same_message(a, b):
+    ha = hashlib.md5(a.encode()).hexdigest()
+    hb = hashlib.md5(b.encode()).hexdigest()
+    return ha == hb
 
 async def update():
     global TWITTER_LISTENERS, Agent, TickCounter, ErrorCnt
@@ -119,7 +122,7 @@ async def update():
     for account, data in TWITTER_LISTENERS.items():
         webhook, dc_role_id = data
         _G.log_debug(f"Getting tweets from {account}")
-        PREV_NEWS_FILE = f".{account}_prevtweets.json"
+        prev_file = f".{account}_prevtweets.json"
         news = []
         try:
             news = get_new_tweets(account)
@@ -131,21 +134,35 @@ async def update():
             _G.log_error("Unable to get new tweets")
             ErrorCnt += 1
             continue
-        olds = get_old_tweets(account, PREV_NEWS_FILE)
+        olds = get_old_tweets(account, prev_file)
         o_cksum = 0
         if olds:
             o_cksum = olds[0]['postedAt']
+        else:
+            _G.log_warning(f"{prev_file} does not exists")
         n_cksum = news[0]['postedAt']
+        _G.log_debug(f"{account} N/O checksum: {n_cksum}/{o_cksum}")
         if o_cksum > n_cksum:
             _G.log_warning(f"Old news newer than latest news ({o_cksum} > {n_cksum})")
-        elif o_cksum == n_cksum and news[0]['message'] == olds[0]['message']:
+        elif o_cksum == n_cksum and is_same_message(news[0]['message'], olds[0]['message']):
             _G.log_debug("No news, skip")
             continue
 
         _G.log_info(f"Gathering {account} new tweets")
         ar = []
         for n in news:
-            if not olds or n['id'] > olds[0]['id'] or (n['id'] == olds[0]['id'] and n['message'] != olds[0]['message']):
+            if not olds or n['id'] > olds[0]['id'] or (n['id'] == olds[0]['id'] and not is_same_message(n['message'], olds[0]['message'])):
+                # skips ffxiv fc recruits rt
+                if account == 'ff_xiv_jp':
+                    kws = ('メンバー', '募集', 'FC')
+                    msg = n['message']
+                    score = 0
+                    for k in kws:
+                        if k in msg:
+                            score += 1
+                    if score >= 2:
+                        _G.log_info("Skipped tweet:\n", msg)
+                        continue
                 ar.insert(0, n)
             else:
                 break
@@ -169,7 +186,7 @@ async def update():
                     send_message(u, a)
         except Exception as err:
             utils.handle_exception(err)
-        with open(PREV_NEWS_FILE, 'w') as fp:
+        with open(prev_file, 'w') as fp:
             json.dump(news, fp)
 
 

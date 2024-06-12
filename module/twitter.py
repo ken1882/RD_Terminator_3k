@@ -140,11 +140,13 @@ async def update():
             o_cksum = olds[0]['postedAt']
         else:
             _G.log_warning(f"{prev_file} does not exists")
-        n_cksum = news[0]['postedAt']
-        _G.log_debug(f"{account} N/O checksum: {n_cksum}/{o_cksum}")
+        n_cksum = int(news[0]['postedAt'])
+        o_cksum = int(o_cksum)
+        is_same = is_same_message(news[0]['message'], olds[0]['message'])
+        _G.log_debug(f"{account} N/O checksum: {n_cksum}/{o_cksum}, same: {is_same}")
         if o_cksum > n_cksum:
             _G.log_warning(f"Old news newer than latest news ({o_cksum} > {n_cksum})")
-        elif o_cksum == n_cksum and is_same_message(news[0]['message'], olds[0]['message']):
+        if o_cksum == n_cksum and is_same:
             _G.log_debug("No news, skip")
             continue
 

@@ -158,7 +158,7 @@ async def update():
             if not olds or n['id'] > olds[0]['id'] or (n['id'] == olds[0]['id'] and not is_same_message(n['message'], olds[0]['message'])):
                 # skips ffxiv fc recruits rt
                 if account == 'ff_xiv_jp':
-                    kws = ('メンバー', '募集', 'FC')
+                    kws = ('メンバー', '募集', 'FC', 'FCPR20')
                     msg = n['message']
                     score = 0
                     for k in kws:

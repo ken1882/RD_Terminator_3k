@@ -45,6 +45,7 @@ ACTIVE_HOURS    = []
 LAZY_HOURS      = [range(20, 24), range(0, 9)]
 NORMAL_INTERVAL = 5
 LAZY_INTERVAL   = 30
+MAX_RECONNECT_TICK = 60*24 # updates every minute, reconnect per day
 
 Agent = None
 TickCounter = 0
@@ -102,10 +103,13 @@ def is_same_message(a, b):
     return ha == hb
 
 async def update():
-    global TWITTER_LISTENERS, Agent, TickCounter, ErrorCnt
+    global Agent, TickCounter, ErrorCnt
+    TickCounter += 1
+    if TickCounter > MAX_RECONNECT_TICK:
+        connect_twitter()
+        TickCounter = 0
     if not Agent:
         return
-    TickCounter += 1
     err_threshold = len(TWITTER_LISTENERS.keys())
     if ErrorCnt > err_threshold:
         Agent = None

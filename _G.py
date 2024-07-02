@@ -79,7 +79,7 @@ def collect_scmd_guids(cmd):
   return ret
 
 def format_curtime():
-  return datetime.strftime(datetime.now(), '%H:%M:%S')
+  return datetime.strftime(datetime.now(), '%Y-%m-%d_%H:%M:%S')
 
 def log_error(*args, **kwargs):
   if VerboseLevel >= 1:

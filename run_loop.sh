@@ -11,6 +11,7 @@ while true; do
       tmux send-keys -t 0:2 C-z
       kill -9 $(pgrep python)
       sleep 1
+      tmux send-keys -t 0:2 "python main.py" Enter
     fi
   fi
   sleep 60

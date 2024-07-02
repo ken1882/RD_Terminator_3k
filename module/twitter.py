@@ -45,7 +45,7 @@ ACTIVE_HOURS    = []
 LAZY_HOURS      = [range(20, 24), range(0, 9)]
 NORMAL_INTERVAL = 5
 LAZY_INTERVAL   = 30
-MAX_RECONNECT_TICK = 60*24 # updates every minute, reconnect per day
+MAX_RECONNECT_TICK = 60 * 24 * 7
 
 Agent = None
 TickCounter = 0

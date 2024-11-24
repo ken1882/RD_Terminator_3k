@@ -23,14 +23,14 @@ TWITTER_LISTENERS = {
         os.getenv('TSK_TWT_WEBHOOK'),
         os.getenv('TSK_GAME_ROLE'),
     ),
-    'EN_BlueArchive': (
-        os.getenv('BAH_TWT_WEBHOOK'),
-        os.getenv('BAH_GAME_ROLE'),
-    ),
-    'Blue_ArchiveJP': (
-        os.getenv('BAH_TWT_WEBHOOK'),
-        os.getenv('BAH_GAME_ROLE'),
-    ),
+    # 'EN_BlueArchive': (
+    #     os.getenv('BAH_TWT_WEBHOOK'),
+    #     os.getenv('BAH_GAME_ROLE'),
+    # ),
+    # 'Blue_ArchiveJP': (
+    #     os.getenv('BAH_TWT_WEBHOOK'),
+    #     os.getenv('BAH_GAME_ROLE'),
+    # ),
     'azurlane_staff': (
         os.getenv('AZL_TWT_WEBHOOK'),
         os.getenv('AZL_GAME_ROLE'),

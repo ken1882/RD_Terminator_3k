@@ -6,4 +6,4 @@ requests
 flask
 python-dotenv
 gunicorn==20.1.0
-tweety-ns==0.9
+tweety-ns==2.0.2

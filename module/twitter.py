@@ -8,7 +8,7 @@ import _G
 import utils
 import hashlib
 from tweety import Twitter
-from tweety.types.twDataTypes import TweetThread
+from tweety.types.twDataTypes import SelfThread
 
 TWITTER_LISTENERS = {
     'mist_staff': (
@@ -43,8 +43,8 @@ TWITTER_LISTENERS = {
 
 ACTIVE_HOURS    = []
 LAZY_HOURS      = [range(20, 24), range(0, 9)]
-NORMAL_INTERVAL = 5
-LAZY_INTERVAL   = 30
+NORMAL_INTERVAL = 1 #5
+LAZY_INTERVAL   = 1 #30
 MAX_RECONNECT_TICK = 60 * 24 * 7
 
 Agent = None
@@ -61,14 +61,14 @@ def parse_tweet(tweet):
     ret['account'] = tweet.author.username
     return ret
 
-def get_new_tweets(account):
+async def get_new_tweets(account):
     global Agent
     ret = []
     try:
-        tweets = Agent.get_tweets(account)
+        tweets = await Agent.get_tweets(account)
         for t in tweets:
             # only interpret first Thread level
-            if type(t) == TweetThread:
+            if type(t) == SelfThread:
                 for t2 in t:
                     pt = parse_tweet(t2)
                     if pt:
@@ -129,7 +129,7 @@ async def update():
         prev_file = f".{account}_prevtweets.json"
         news = []
         try:
-            news = get_new_tweets(account)
+            news = await get_new_tweets(account)
             news = sorted(news, key=lambda o: -o['id'])
         except Exception as err:
             utils.handle_exception(err)
@@ -199,6 +199,7 @@ async def update():
 
 
 def send_message(url, obj):
+    return
     return requests.post(
         url,
         json={

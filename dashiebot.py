@@ -102,6 +102,7 @@ async def on_ready():
         return
     print(f"{Bot.user.name} has connected to Discord!")
     for m in Bot.dashie_modules:
+        _G.log_info(f"Initializing {m}")
         m.init()
     _G.FlagReady = True
     await main_loop.start()

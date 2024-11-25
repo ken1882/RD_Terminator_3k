@@ -1,3 +1,4 @@
+import asyncio
 import requests
 import json
 import os
@@ -217,13 +218,13 @@ def send_message(url, obj):
         }
     )
 
-def connect_twitter():
+async def connect_twitter():
     global Agent, ErrorCnt
     Agent = Twitter('session')
     try:
-        Agent.sign_in(os.getenv('TWITTER_USERNAME'), os.getenv('TWITTER_PASSWORD'))
-        Agent.connect()
-        _G.log_info("Twitter connected")
+        a  = await Agent.sign_in(os.getenv('TWITTER_USERNAME'), os.getenv('TWITTER_PASSWORD'))
+        a |= await Agent.connect()
+        _G.log_info(f"Twitter connected: {a}")
     except Exception as err:
         utils.handle_exception(err)
         if ErrorCnt > 10:
@@ -233,10 +234,10 @@ def connect_twitter():
             Agent = None
             return
         _G.log_info(f"Try using username/pwd to sign in again, depth={ErrorCnt}")
-        Agent.sign_in(os.getenv('TWITTER_USERNAME'), os.getenv('TWITTER_PASSWORD'))
+        await Agent.sign_in(os.getenv('TWITTER_USERNAME'), os.getenv('TWITTER_PASSWORD'))
 
 def init():
-    connect_twitter()
+    asyncio.run(connect_twitter())
 
 def reload():
     pass

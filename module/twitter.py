@@ -9,6 +9,7 @@ import utils
 import hashlib
 from tweety import Twitter
 from tweety.types.twDataTypes import SelfThread
+from tweety.exceptions import TwitterError
 
 TWITTER_LISTENERS = {
     'mist_staff': (
@@ -61,22 +62,32 @@ def parse_tweet(tweet):
     ret['account'] = tweet.author.username
     return ret
 
+
+def parse_tweet_threads(tweets):
+    ret = []
+    for t in tweets:
+        # only interpret first Thread level
+        if type(t) == SelfThread:
+            for t2 in t:
+                pt = parse_tweet(t2)
+                if pt:
+                    ret.append(pt)
+        else:
+            pt = parse_tweet(t)
+            if pt:
+                ret.append(pt)
+    return ret
+
 async def get_new_tweets(account):
     global Agent
     ret = []
     try:
         tweets = await Agent.get_tweets(account)
-        for t in tweets:
-            # only interpret first Thread level
-            if type(t) == SelfThread:
-                for t2 in t:
-                    pt = parse_tweet(t2)
-                    if pt:
-                        ret.append(pt)
-            else:
-                pt = parse_tweet(t)
-                if pt:
-                    ret.append(pt)
+        ret = parse_tweet_threads(tweets)
+    except TwitterError:
+        connect_twitter()
+        tweets = await Agent.get_tweets(account)
+        ret = parse_tweet_threads(tweets)
     except Exception as err:
         utils.handle_exception(err)
         return []

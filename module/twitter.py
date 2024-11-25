@@ -237,7 +237,13 @@ async def connect_twitter():
         await Agent.sign_in(os.getenv('TWITTER_USERNAME'), os.getenv('TWITTER_PASSWORD'))
 
 def init():
-    asyncio.run(connect_twitter())
+    pass
+
+async def ainit():
+    await connect_twitter()
 
 def reload():
+    pass
+
+async def areload():
     pass

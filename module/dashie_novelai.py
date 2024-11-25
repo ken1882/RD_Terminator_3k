@@ -34,7 +34,7 @@ def request_nai_gen(fname, params):
 
 UCP_OPTIONS = ['Low Quality + Bad Anatomy', 'Low Quality', 'None']
 
-@Bot.slash_command(name='naigen', 
+@Bot.slash_command(name='naigen',
     description="Novel AI image generation",
     guild_ids=_G.collect_scmd_guids('naigen')
 )
@@ -116,8 +116,8 @@ async def naigen(ctx, tags, model, sampler, steps, scale, seed, ucp, uc):
 
 def reload():
     return requests.post(
-        f"{NAI_API_HOST}/api/ReloadConfig", 
-        json.dumps({'token': os.getenv('FLASK_REFRESH_KEY')}), 
+        f"{NAI_API_HOST}/api/ReloadConfig",
+        json.dumps({'token': os.getenv('FLASK_REFRESH_KEY')}),
         headers=NAI_API_HEADERS
     )
 
@@ -125,4 +125,10 @@ async def update():
     pass
 
 def init():
+    pass
+
+async def ainit():
+    pass
+
+async def areload():
     pass

@@ -140,3 +140,9 @@ def init():
 
 def reload():
     pass
+
+async def ainit():
+    pass
+
+async def areload():
+    pass

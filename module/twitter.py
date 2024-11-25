@@ -43,8 +43,8 @@ TWITTER_LISTENERS = {
 
 ACTIVE_HOURS    = []
 LAZY_HOURS      = [range(20, 24), range(0, 9)]
-NORMAL_INTERVAL = 5
-LAZY_INTERVAL   = 30
+NORMAL_INTERVAL = 1
+LAZY_INTERVAL   = 1
 MAX_RECONNECT_TICK = 60 * 24 * 7
 
 Agent = None
@@ -199,7 +199,6 @@ async def update():
 
 
 def send_message(url, obj):
-    return
     return requests.post(
         url,
         json={
@@ -208,14 +207,21 @@ def send_message(url, obj):
     )
 
 def connect_twitter():
-    global Agent
+    global Agent, ErrorCnt
     Agent = Twitter('session')
     try:
+        Agent.sign_in(os.getenv('TWITTER_USERNAME'), os.getenv('TWITTER_PASSWORD'))
         Agent.connect()
         _G.log_info("Twitter connected")
     except Exception as err:
         utils.handle_exception(err)
-        _G.log_info("Using username/pwd to sign in")
+        if ErrorCnt > 10:
+            msg = "Disable twitter module due to successive errors"
+            _G.log_warning(msg)
+            utils.send_critical_message(f"{msg}\bError: {err}")
+            Agent = None
+            return
+        _G.log_info(f"Try using username/pwd to sign in again, depth={ErrorCnt}")
         Agent.sign_in(os.getenv('TWITTER_USERNAME'), os.getenv('TWITTER_PASSWORD'))
 
 def init():

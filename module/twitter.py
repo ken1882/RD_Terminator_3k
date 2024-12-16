@@ -154,7 +154,7 @@ async def update():
             _G.log_error("Unable to get new tweets")
             ErrorCnt += 1
             continue
-        olds = get_old_tweets(account, prev_file)
+        olds = await get_old_tweets(account, prev_file)
         o_cksum = 0
         if olds:
             o_cksum = olds[0]['postedAt']

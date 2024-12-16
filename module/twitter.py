@@ -107,9 +107,11 @@ async def get_old_tweets(account, prev_file):
             return []
         with open(prev_file, 'w') as fp:
             json.dump(ret, fp)
-    else:
+    try:
         with open(prev_file, 'r') as fp:
             ret = json.load(fp)
+    except Exception:
+        ret = []
     ret = sorted(ret, key=lambda o: -o['id'])
     return ret
 

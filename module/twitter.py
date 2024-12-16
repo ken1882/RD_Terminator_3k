@@ -99,10 +99,10 @@ async def get_new_tweets(account):
     ret = sorted(ret, key=lambda o: -o['id'])
     return ret
 
-def get_old_tweets(account, prev_file):
+async def get_old_tweets(account, prev_file):
     ret = []
     if not os.path.exists(prev_file):
-        ret = get_new_tweets(account)
+        ret = await get_new_tweets(account)
         if not ret:
             return []
         with open(prev_file, 'w') as fp:

@@ -164,7 +164,7 @@ async def update():
             _G.log_warning(f"{prev_file} does not exists")
         n_cksum = int(news[0]['postedAt'])
         o_cksum = int(o_cksum)
-        is_same = is_same_message(news[0]['message'], olds[0]['message'])
+        # is_same = is_same_message(news[0]['message'], olds[0]['message'])
         # _G.log_debug(f"{account} N/O checksum: {n_cksum}/{o_cksum}, same: {is_same}")
         # if not is_same:
         #     _G.log_debug(f"\n{news[0]['message']}\n---\n{olds[0]['message']}\n")

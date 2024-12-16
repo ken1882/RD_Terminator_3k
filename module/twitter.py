@@ -222,8 +222,9 @@ async def connect_twitter():
     global Agent, ErrorCnt
     Agent = Twitter('session')
     try:
-        a  = await Agent.sign_in(os.getenv('TWITTER_USERNAME'), os.getenv('TWITTER_PASSWORD'))
-        a |= await Agent.connect()
+        a = await Agent.connect()
+        if not a:
+            a = await Agent.sign_in(os.getenv('TWITTER_USERNAME'), os.getenv('TWITTER_PASSWORD'))
         _G.log_info(f"Twitter connected: {a}")
     except Exception as err:
         utils.handle_exception(err)

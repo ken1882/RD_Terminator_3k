@@ -40,6 +40,10 @@ TWITTER_LISTENERS = {
     'ff_xiv_jp': (
         os.getenv('FFXIV_TWT_WEBHOOK'),
         os.getenv('FFXIV_GAME_ROLE'),
+    ),
+    'Angelica_Aster': (
+        os.getenv('AA_TWT_WEBHOOK'),
+        os.getenv('AA_GAME_ROLE'),
     )
 }
 

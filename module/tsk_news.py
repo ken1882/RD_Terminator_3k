@@ -37,25 +37,25 @@ TSK_NEWS_TAG = {
 }
 
 TSK_NEWS_ICON = {
-  1: 'https://cdn-icons-png.flaticon.com/512/777/777081.png',
-  2: 'https://cdn.icon-icons.com/icons2/1508/PNG/512/updatemanager_104426.png',
-  3: 'https://cdn-icons-png.flaticon.com/512/4230/4230567.png',
-  4: 'https://cdn-icons-png.flaticon.com/512/4285/4285436.png',
-  5: 'https://cdn-icons-png.flaticon.com/512/3867/3867424.png',
-  6: 'https://www.iconsdb.com/icons/preview/red/error-7-xxl.png',
-  7: 'https://cdn-icons-png.flaticon.com/512/1827/1827301.png',
-  8: 'https://www.iconsdb.com/icons/preview/red/error-7-xxl.png',
+  1: 'https://cdn-icons-png.flaticon.com/512/777/777081.png', # MAINTENANCE
+  2: 'https://cdn.icon-icons.com/icons2/1508/PNG/512/updatemanager_104426.png', # UPDATE
+  3: 'https://cdn-icons-png.flaticon.com/512/4230/4230567.png', # GACHA
+  4: 'https://cdn-icons-png.flaticon.com/512/4285/4285436.png', # EVENT
+  5: 'https://cdn-icons-png.flaticon.com/512/3867/3867424.png', # CAMPAIGN
+  6: 'https://www.iconsdb.com/icons/preview/red/error-7-xxl.png', # BUG
+  7: 'https://cdn-icons-png.flaticon.com/512/1827/1827301.png', # MISC
+  8: 'https://www.iconsdb.com/icons/preview/red/error-7-xxl.png', # IMPORTANT
 }
 
 TSK_NEWS_COLOR = {
-  1: 0xfc3aef,
-  2: 0x5299f7,
-  3: 0xfad73c,
-  4: 0x50faf4,
-  5: 0xff5cb0,
-  6: 0xdb043e,
-  7: 0xcccccc,
-  8: 0xdb043e
+  1: 0xfc3aef, # MAINTENANCE
+  2: 0x5299f7, # UPDATE
+  3: 0xfad73c, # GACHA
+  4: 0x50faf4, # EVENT
+  5: 0xff5cb0, # CAMPAIGN
+  6: 0xdb043e, # BUG
+  7: 0xcccccc, # MISC
+  8: 0xdb043e  # IMPORTANT
 }
 
 TSK_VOCAB_JP = {

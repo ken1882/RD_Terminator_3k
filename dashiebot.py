@@ -40,7 +40,7 @@ def isCommandCDOk(ctx):
         ldat = _G.PermissionData[gid]['commands'][cmd]
     except Exception:
         return True
-    
+
     # pprint(_G.CommandLimit)
     cdat = _G.CommandLimit[gid][cmd]
     if 'limit' not in ldat or 'cooldown' not in ldat:
@@ -54,12 +54,12 @@ def isCommandCDOk(ctx):
         else:
             ctx.message = f"Server command limit reached, try after {str(cdat['ttl'])}"
             return False
-    
+
     aid = ctx.author.id
     if aid in cdat and curt < cdat[aid]:
         ctx.message = f"Your command is in cooldown, try after {str(cdat[aid])}"
         return False
-    
+
     cdat['total'] += 1
     cdat[aid] = curt + timedelta(seconds=ldat['cooldown'])
     return True
@@ -74,7 +74,7 @@ def isCommandUsable(ctx):
         roles = []
     cmd = str(ctx.command)
     if str(aid) in os.getenv('DEVELOPER_ID').split(','):
-        return True    
+        return True
     if gid == 0 and str(aid) not in os.getenv('DEVELOPER_ID').split(','):
         return False
     if gid not in _G.PermissionData:
@@ -104,6 +104,7 @@ async def on_ready():
     for m in Bot.dashie_modules:
         _G.log_info(f"Initializing {m}")
         m.init()
+        await m.ainit()
     _G.FlagReady = True
     await main_loop.start()
 
@@ -140,6 +141,7 @@ async def reload(ctx):
     _G.reload()
     for m in Bot.dashie_modules:
         m.reload()
+        await m.areload()
     return await ctx.reply('Configuation reloaded')
 
 def run():

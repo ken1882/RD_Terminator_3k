@@ -91,3 +91,9 @@ def reload():
 
 def init():
     pass
+
+async def ainit():
+    pass
+
+async def areload():
+    pass

@@ -199,6 +199,8 @@ async def update():
             if ar and dc_role_id:
                 roles = dc_role_id.split(',')
                 for i,role in enumerate(roles):
+                    if i >= len(urls):
+                        break
                     if not role:
                         continue
                     requests.post(

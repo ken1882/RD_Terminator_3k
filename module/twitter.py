@@ -40,6 +40,10 @@ TWITTER_LISTENERS = {
     'ff_xiv_jp': (
         os.getenv('FFXIV_TWT_WEBHOOK'),
         os.getenv('FFXIV_GAME_ROLE'),
+    ),
+    'Angelica_Aster': (
+        os.getenv('AA_TWT_WEBHOOK'),
+        os.getenv('AA_GAME_ROLE'),
     )
 }
 
@@ -95,17 +99,19 @@ async def get_new_tweets(account):
     ret = sorted(ret, key=lambda o: -o['id'])
     return ret
 
-def get_old_tweets(account, prev_file):
+async def get_old_tweets(account, prev_file):
     ret = []
     if not os.path.exists(prev_file):
-        ret = get_new_tweets(account)
+        ret = await get_new_tweets(account)
         if not ret:
             return []
         with open(prev_file, 'w') as fp:
             json.dump(ret, fp)
-    else:
+    try:
         with open(prev_file, 'r') as fp:
             ret = json.load(fp)
+    except Exception:
+        ret = []
     ret = sorted(ret, key=lambda o: -o['id'])
     return ret
 
@@ -150,7 +156,7 @@ async def update():
             _G.log_error("Unable to get new tweets")
             ErrorCnt += 1
             continue
-        olds = get_old_tweets(account, prev_file)
+        olds = await get_old_tweets(account, prev_file)
         o_cksum = 0
         if olds:
             o_cksum = olds[0]['postedAt']
@@ -158,7 +164,7 @@ async def update():
             _G.log_warning(f"{prev_file} does not exists")
         n_cksum = int(news[0]['postedAt'])
         o_cksum = int(o_cksum)
-        is_same = is_same_message(news[0]['message'], olds[0]['message'])
+        # is_same = is_same_message(news[0]['message'], olds[0]['message'])
         # _G.log_debug(f"{account} N/O checksum: {n_cksum}/{o_cksum}, same: {is_same}")
         # if not is_same:
         #     _G.log_debug(f"\n{news[0]['message']}\n---\n{olds[0]['message']}\n")
@@ -193,6 +199,8 @@ async def update():
             if ar and dc_role_id:
                 roles = dc_role_id.split(',')
                 for i,role in enumerate(roles):
+                    if i >= len(urls):
+                        break
                     if not role:
                         continue
                     requests.post(
@@ -222,8 +230,9 @@ async def connect_twitter():
     global Agent, ErrorCnt
     Agent = Twitter('session')
     try:
-        a  = await Agent.sign_in(os.getenv('TWITTER_USERNAME'), os.getenv('TWITTER_PASSWORD'))
-        a |= await Agent.connect()
+        a = await Agent.connect()
+        if not a:
+            a = await Agent.sign_in(os.getenv('TWITTER_USERNAME'), os.getenv('TWITTER_PASSWORD'))
         _G.log_info(f"Twitter connected: {a}")
     except Exception as err:
         utils.handle_exception(err)
